@@ -1,0 +1,21 @@
+{
+  "name": "ai-action-agent",
+  "version": "0.1.0",
+  "description": "Electron prototype that records web actions, interprets them, and replays them as an AI-style workflow agent.",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^41.1.0"
+  },
+  "keywords": [
+    "electron",
+    "automation",
+    "agent",
+    "recorder"
+  ],
+  "author": "",
+  "license": "MIT"
+}

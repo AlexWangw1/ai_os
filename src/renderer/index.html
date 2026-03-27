@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com data:; connect-src 'self' https://api.openai.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:;"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Action Agent Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar sidebar-left">
+        <div class="brand-block">
+          <p class="eyebrow">Action Agent Studio</p>
+          <h1>把用户动作学成可回放流程</h1>
+          <p class="lede">
+            录下网页里的点击、输入与滚动，让 AI 生成可解释的步骤，再把它作为一个可复用 agent 回放。
+          </p>
+        </div>
+
+        <section class="control-panel">
+          <label class="field">
+            <span>目标网址</span>
+            <input id="urlInput" type="text" placeholder="https://example.com" />
+          </label>
+
+          <div class="button-row">
+            <button id="openPageBtn" class="btn btn-primary">打开页面</button>
+            <button id="startRecordingBtn" class="btn btn-ghost">开始录制</button>
+            <button id="stopRecordingBtn" class="btn btn-ghost" disabled>停止</button>
+          </div>
+
+          <div class="button-row">
+            <button id="analyzeBtn" class="btn btn-secondary">理解动作</button>
+            <button id="replayBtn" class="btn btn-primary">回放流程</button>
+          </div>
+
+          <div class="button-row">
+            <button id="saveBtn" class="btn btn-ghost">导出流程</button>
+            <button id="loadBtn" class="btn btn-ghost">导入流程</button>
+            <button id="clearBtn" class="btn btn-ghost">清空</button>
+          </div>
+        </section>
+
+        <section class="status-panel">
+          <div class="status-line">
+            <span>录制状态</span>
+            <strong id="recordingBadge" data-state="idle">待机中</strong>
+          </div>
+          <div class="status-line">
+            <span>动作数量</span>
+            <strong id="actionCount">0</strong>
+          </div>
+          <div class="status-line">
+            <span>当前模式</span>
+            <strong id="analysisMode">本地理解</strong>
+          </div>
+        </section>
+
+        <section class="settings-panel">
+          <div class="section-title">
+            <span>AI 增强理解</span>
+            <small>可选</small>
+          </div>
+          <label class="field">
+            <span>API Key</span>
+            <input id="apiKeyInput" type="password" placeholder="sk-..." />
+          </label>
+          <label class="field">
+            <span>模型名</span>
+            <input id="modelInput" type="text" value="gpt-4.1-mini" />
+          </label>
+          <label class="field">
+            <span>接口地址</span>
+            <input id="endpointInput" type="text" value="https://api.openai.com/v1/chat/completions" />
+          </label>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <section class="stage-header">
+          <div>
+            <p class="eyebrow">Live Workspace</p>
+            <h2 id="pageTitle">等待载入页面</h2>
+          </div>
+          <div class="stage-meta">
+            <span id="pageUrlDisplay">尚未打开任何网页</span>
+          </div>
+        </section>
+
+        <section class="browser-stage">
+          <div class="browser-chrome">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <webview id="agentWebview" partition="persist:action-agent" allowpopups></webview>
+        </section>
+      </main>
+
+      <aside class="sidebar sidebar-right">
+        <section class="analysis-panel">
+          <div class="section-title">
+            <span>AI 理解结果</span>
+            <small id="confidenceText">等待分析</small>
+          </div>
+          <div id="analysisEmpty" class="empty-state">
+            先开始录制一段操作，再点击“理解动作”。
+          </div>
+          <div id="analysisContent" class="analysis-content hidden">
+            <h3 id="analysisTitle"></h3>
+            <p id="analysisSummary"></p>
+            <p class="goal-line">
+              <span>目标</span>
+              <strong id="analysisGoal"></strong>
+            </p>
+            <div>
+              <h4>步骤拆解</h4>
+              <ol id="stepsList" class="steps-list"></ol>
+            </div>
+            <div>
+              <h4>风险提醒</h4>
+              <ul id="risksList" class="meta-list"></ul>
+            </div>
+            <div>
+              <h4>自动化建议</h4>
+              <ul id="notesList" class="meta-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="timeline-panel">
+          <div class="section-title">
+            <span>动作时间线</span>
+            <small id="timelineHint">按录制顺序展示</small>
+          </div>
+          <div id="timeline" class="timeline"></div>
+        </section>
+      </aside>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
