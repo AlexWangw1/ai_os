@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com data:; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:;"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agent Config Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="settings-shell">
+      <aside class="provider-sidebar">
+        <div class="sidebar-header">
+          <p class="eyebrow">Agent Config Center</p>
+          <h1>模型与扩展中心</h1>
+          <p class="lede">
+            在这里统一管理模型路由、MCP 工具连接和 Skills 能力包，让你的 agent 不只是能思考，也能持续扩展。
+          </p>
+        </div>
+
+        <div class="sidebar-actions">
+          <button id="addProviderBtn" class="btn btn-primary">新增模型接入</button>
+          <button id="duplicateProviderBtn" class="btn btn-ghost">复制当前接入</button>
+        </div>
+
+        <section class="provider-list-panel">
+          <div class="panel-header">
+            <span>模型 Provider</span>
+            <small id="providerCountText">0</small>
+          </div>
+          <div id="providerList" class="provider-list"></div>
+        </section>
+
+        <section class="provider-list-panel compact-panel">
+          <div class="panel-header">
+            <span>扩展快照</span>
+            <small>Enabled</small>
+          </div>
+          <div class="snapshot-stack">
+            <div class="snapshot-card">
+              <span>MCP Servers</span>
+              <strong id="enabledMcpCountText">0</strong>
+            </div>
+            <div class="snapshot-card">
+              <span>Skills</span>
+              <strong id="enabledSkillCountText">0</strong>
+            </div>
+            <div class="snapshot-card">
+              <span>自动挂载 Skills</span>
+              <strong id="autoAttachCountText">0</strong>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <main class="config-workspace">
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow">Routing, MCP & Skills</p>
+            <h2>让 agent 可管理、可扩展</h2>
+          </div>
+          <div class="header-actions">
+            <button id="saveSettingsBtn" class="btn btn-primary">保存配置</button>
+            <button id="closeWindowBtn" class="btn btn-ghost">关闭窗口</button>
+          </div>
+        </header>
+
+        <div class="workspace-scroll">
+          <section class="panel route-panel">
+            <div class="panel-header">
+              <span>模型路由</span>
+              <small id="restoreShortcutText">Ctrl+Shift+A</small>
+            </div>
+            <div class="grid two-col">
+              <label class="field">
+                <span>路由模式</span>
+                <select id="routeModeSelect">
+                  <option value="auto">自动判断任务难度</option>
+                  <option value="simple">始终使用简单模型</option>
+                  <option value="complex">始终使用复杂模型</option>
+                </select>
+              </label>
+              <div class="field toggle-field">
+                <span>录制行为</span>
+                <label class="toggle-inline">
+                  <input id="autoHideOnRecordInput" type="checkbox" />
+                  <span>开始录制后自动隐藏到后台</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="route-grid">
+              <div class="route-card">
+                <div class="route-card-header">
+                  <strong>简单任务</strong>
+                  <small>Short Flows</small>
+                </div>
+                <label class="field">
+                  <span>Provider</span>
+                  <select id="simpleProviderSelect"></select>
+                </label>
+                <label class="field">
+                  <span>模型名</span>
+                  <input id="simpleModelInput" type="text" placeholder="gpt-4.1-mini" />
+                </label>
+              </div>
+
+              <div class="route-card">
+                <div class="route-card-header">
+                  <strong>复杂任务</strong>
+                  <small>Long Flows</small>
+                </div>
+                <label class="field">
+                  <span>Provider</span>
+                  <select id="complexProviderSelect"></select>
+                </label>
+                <label class="field">
+                  <span>模型名</span>
+                  <input id="complexModelInput" type="text" placeholder="gpt-4.1" />
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel editor-panel">
+            <div class="panel-header">
+              <span>当前模型接入配置</span>
+              <small id="editingProviderText">未选择</small>
+            </div>
+            <div class="grid two-col">
+              <label class="field">
+                <span>接入名称</span>
+                <input id="providerNameInput" type="text" placeholder="例如：OpenAI Production" />
+              </label>
+              <label class="field">
+                <span>Provider 类型</span>
+                <select id="providerTypeSelect"></select>
+              </label>
+              <label class="field field-span-2">
+                <span>Endpoint</span>
+                <input id="providerEndpointInput" type="text" placeholder="https://api.openai.com/v1/chat/completions" />
+              </label>
+              <label class="field field-span-2">
+                <span>API Key</span>
+                <input id="providerApiKeyInput" type="password" placeholder="sk-... 或本地服务可留空" />
+              </label>
+              <label class="field field-span-2">
+                <span>自定义 Headers JSON</span>
+                <textarea id="providerHeadersInput" rows="4" placeholder='{"HTTP-Referer":"https://your-app.example"}'></textarea>
+              </label>
+              <label class="field field-span-2">
+                <span>备注</span>
+                <textarea id="providerNotesInput" rows="3" placeholder="记录这个模型接入适合做什么，例如复杂任务、本地离线模型等。"></textarea>
+              </label>
+            </div>
+
+            <div class="editor-footer">
+              <label class="toggle-inline">
+                <input id="providerEnabledInput" type="checkbox" />
+                <span>启用这个模型接入</span>
+              </label>
+              <button id="deleteProviderBtn" class="btn btn-danger">删除当前接入</button>
+            </div>
+          </section>
+
+          <section class="panel catalog-panel">
+            <div class="panel-header">
+              <span>模型快速接入模板</span>
+              <small>Click To Add</small>
+            </div>
+            <div id="catalogGrid" class="catalog-grid"></div>
+          </section>
+
+          <section class="panel extension-panel">
+            <div class="panel-header">
+              <span>扩展能力工作台</span>
+              <small>Manage MCP & Skills</small>
+            </div>
+
+            <div class="extension-summary-grid">
+              <div class="summary-chip">
+                <span>可用 MCP</span>
+                <strong id="extensionMcpSummaryText">0 个启用</strong>
+              </div>
+              <div class="summary-chip">
+                <span>可用 Skills</span>
+                <strong id="extensionSkillSummaryText">0 个启用</strong>
+              </div>
+              <div class="summary-chip">
+                <span>自动挂载</span>
+                <strong id="extensionAutoAttachSummaryText">0 个 Skill</strong>
+              </div>
+            </div>
+
+            <div class="extension-grid">
+              <section class="studio-card">
+                <div class="studio-header">
+                  <div>
+                    <strong>MCP 管理</strong>
+                    <small id="mcpCountText">0 个连接</small>
+                  </div>
+                  <div class="studio-actions">
+                    <button id="addMcpBtn" class="btn btn-primary btn-sm">新增</button>
+                    <button id="duplicateMcpBtn" class="btn btn-ghost btn-sm">复制</button>
+                    <button id="deleteMcpBtn" class="btn btn-danger btn-sm">删除</button>
+                  </div>
+                </div>
+
+                <div id="mcpList" class="entity-list"></div>
+
+                <div class="grid two-col editor-grid">
+                  <label class="field">
+                    <span>连接名称</span>
+                    <input id="mcpNameInput" type="text" placeholder="例如：Filesystem MCP" />
+                  </label>
+                  <label class="field">
+                    <span>传输方式</span>
+                    <select id="mcpTransportSelect">
+                      <option value="stdio">stdio</option>
+                      <option value="sse">sse</option>
+                      <option value="http">http</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>作用阶段</span>
+                    <select id="mcpScopeSelect">
+                      <option value="all">所有阶段</option>
+                      <option value="planning">规划阶段</option>
+                      <option value="execution">执行阶段</option>
+                      <option value="analysis">分析阶段</option>
+                      <option value="review">复核阶段</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>命令</span>
+                    <input id="mcpCommandInput" type="text" placeholder="例如：npx" />
+                  </label>
+                  <label class="field field-span-2">
+                    <span>参数 JSON 数组</span>
+                    <textarea id="mcpArgsInput" rows="3" placeholder='["@modelcontextprotocol/server-filesystem","."]'></textarea>
+                  </label>
+                  <label class="field field-span-2">
+                    <span>Endpoint</span>
+                    <input id="mcpEndpointInput" type="text" placeholder="SSE/HTTP 方式时填写，例如 http://127.0.0.1:3001/sse" />
+                  </label>
+                  <label class="field field-span-2">
+                    <span>环境变量 JSON</span>
+                    <textarea id="mcpEnvInput" rows="3" placeholder='{"API_KEY":"..."}'></textarea>
+                  </label>
+                  <label class="field field-span-2">
+                    <span>能力摘要</span>
+                    <textarea id="mcpCapabilityInput" rows="3" placeholder="这个 MCP 主要能给 agent 提供什么能力。"></textarea>
+                  </label>
+                  <label class="field field-span-2">
+                    <span>备注</span>
+                    <textarea id="mcpNotesInput" rows="3" placeholder="记录接入说明、权限边界或部署环境。"></textarea>
+                  </label>
+                </div>
+
+                <div class="editor-footer">
+                  <label class="toggle-inline">
+                    <input id="mcpEnabledInput" type="checkbox" />
+                    <span>启用这个 MCP 连接</span>
+                  </label>
+                </div>
+
+                <div class="mini-catalog">
+                  <div class="panel-header">
+                    <span>MCP 模板</span>
+                    <small>Quick Add</small>
+                  </div>
+                  <div id="mcpCatalogGrid" class="mini-catalog-grid"></div>
+                </div>
+              </section>
+
+              <section class="studio-card">
+                <div class="studio-header">
+                  <div>
+                    <strong>Skills 管理</strong>
+                    <small id="skillCountText">0 个能力包</small>
+                  </div>
+                  <div class="studio-actions">
+                    <button id="addSkillBtn" class="btn btn-primary btn-sm">新增</button>
+                    <button id="duplicateSkillBtn" class="btn btn-ghost btn-sm">复制</button>
+                    <button id="deleteSkillBtn" class="btn btn-danger btn-sm">删除</button>
+                  </div>
+                </div>
+
+                <div id="skillList" class="entity-list"></div>
+
+                <div class="grid two-col editor-grid">
+                  <label class="field">
+                    <span>Skill 名称</span>
+                    <input id="skillNameInput" type="text" placeholder="例如：网页研究" />
+                  </label>
+                  <label class="field">
+                    <span>来源类型</span>
+                    <select id="skillSourceTypeSelect">
+                      <option value="builtin">builtin</option>
+                      <option value="local">local</option>
+                      <option value="git">git</option>
+                      <option value="custom">custom</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>挂载阶段</span>
+                    <select id="skillApplyToSelect">
+                      <option value="all">所有阶段</option>
+                      <option value="planning">规划阶段</option>
+                      <option value="execution">执行阶段</option>
+                      <option value="analysis">分析阶段</option>
+                      <option value="review">复核阶段</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>入口</span>
+                    <input id="skillEntryInput" type="text" placeholder="例如：skill://browser-automation 或本地路径" />
+                  </label>
+                  <label class="field field-span-2">
+                    <span>描述</span>
+                    <textarea id="skillDescriptionInput" rows="3" placeholder="这个 Skill 会给 agent 增加什么工作方法或知识。"></textarea>
+                  </label>
+                  <label class="field field-span-2">
+                    <span>标签</span>
+                    <input id="skillTagsInput" type="text" placeholder="例如：browser, automation, qa" />
+                  </label>
+                  <label class="field field-span-2">
+                    <span>备注</span>
+                    <textarea id="skillNotesInput" rows="3" placeholder="记录适用场景、调用时机或额外说明。"></textarea>
+                  </label>
+                </div>
+
+                <div class="editor-footer dual-toggle">
+                  <label class="toggle-inline">
+                    <input id="skillEnabledInput" type="checkbox" />
+                    <span>启用这个 Skill</span>
+                  </label>
+                  <label class="toggle-inline">
+                    <input id="skillAutoAttachInput" type="checkbox" />
+                    <span>允许自动挂载到 Agent</span>
+                  </label>
+                </div>
+
+                <div class="mini-catalog">
+                  <div class="panel-header">
+                    <span>Skills 模板</span>
+                    <small>Quick Add</small>
+                  </div>
+                  <div id="skillCatalogGrid" class="mini-catalog-grid"></div>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <footer class="status-footer">
+            <span id="statusMessage">修改完成后点击“保存配置”。</span>
+          </footer>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

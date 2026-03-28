@@ -6,6 +6,11 @@ const ACTION_TITLES = {
   scroll: "滚动页面"
 };
 
+const DIFFICULTY_LABELS = {
+  simple: "简单任务",
+  complex: "复杂任务"
+};
+
 export function normalizeActions(actions) {
   const result = [];
 
@@ -65,6 +70,94 @@ export function buildHeuristicAnalysis(actions) {
     risks: buildRisks(normalized),
     steps: normalized.map(toStep),
     automationNotes: buildAutomationNotes(normalized)
+  };
+}
+
+export function classifyTaskDifficulty(actions) {
+  const normalized = normalizeActions(actions);
+  const stats = {
+    totalActions: normalized.length,
+    actionTypes: new Set(normalized.map((item) => item.type)).size,
+    navigationCount: normalized.filter((item) => item.type === "navigate").length,
+    clickCount: normalized.filter((item) => item.type === "click").length,
+    inputCount: normalized.filter((item) => item.type === "input").length,
+    scrollCount: normalized.filter((item) => item.type === "scroll").length,
+    keyboardCount: normalized.filter((item) => item.type === "keyboard").length,
+    longInputCount: normalized.filter(
+      (item) => item.type === "input" && typeof item.value === "string" && item.value.length >= 32
+    ).length
+  };
+
+  let score = 0;
+  const reasons = [];
+
+  if (stats.totalActions >= 10) {
+    score += 3;
+    reasons.push("动作步数超过 10 步。");
+  } else if (stats.totalActions >= 6) {
+    score += 2;
+    reasons.push("动作步数已经达到中等规模。");
+  }
+
+  if (stats.actionTypes >= 4) {
+    score += 2;
+    reasons.push("动作类型较多，包含多种交互。");
+  } else if (stats.actionTypes >= 3) {
+    score += 1;
+    reasons.push("动作类型不止一种基础点击。");
+  }
+
+  if (stats.navigationCount >= 2) {
+    score += 1;
+    reasons.push("存在多次页面跳转。");
+  }
+
+  if (stats.scrollCount >= 1) {
+    score += 1;
+    reasons.push("流程里包含滚动定位。");
+  }
+
+  if (stats.keyboardCount >= 1) {
+    score += 1;
+    reasons.push("流程里包含键盘动作或快捷键。");
+  }
+
+  if (stats.longInputCount >= 1) {
+    score += 1;
+    reasons.push("存在较长的文本输入。");
+  }
+
+  if (stats.clickCount >= 5) {
+    score += 1;
+    reasons.push("点击动作较多。");
+  }
+
+  const level = score >= 4 ? "complex" : "simple";
+
+  if (level === "simple") {
+    const simpleReasons = [];
+
+    if (stats.totalActions <= 5) {
+      simpleReasons.push("动作步数较少。");
+    }
+
+    if (stats.actionTypes <= 2) {
+      simpleReasons.push("动作类型比较集中。");
+    }
+
+    if (!stats.scrollCount && !stats.keyboardCount && stats.navigationCount <= 1) {
+      simpleReasons.push("没有明显的复杂导航、滚动或快捷键流程。");
+    }
+
+    reasons.splice(0, reasons.length, ...(simpleReasons.length ? simpleReasons : ["主要由基础点击和输入组成。"]));
+  }
+
+  return {
+    level,
+    label: DIFFICULTY_LABELS[level],
+    score,
+    reasons,
+    stats
   };
 }
 

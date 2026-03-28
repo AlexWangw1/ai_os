@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com data:; connect-src 'self' https://api.openai.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:;"
+      content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com data:; connect-src 'self' https://api.openai.com https://api.anthropic.com https://openrouter.ai http://127.0.0.1:11434 http://127.0.0.1:1234 https://api.siliconflow.cn https://api.deepseek.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:;"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Action Agent Studio</title>
@@ -23,7 +23,8 @@
           <p class="eyebrow">Action Agent Studio</p>
           <h1>把用户动作学成可回放流程</h1>
           <p class="lede">
-            录下网页里的点击、输入与滚动，让 AI 生成可解释的步骤，再把它作为一个可复用 agent 回放。
+            录下网页里的点击、输入与滚动，让 AI 生成可解释步骤；再把它升维成一个通用 agent 工作台，
+            用团队视角去规划、执行和沉淀。
           </p>
         </div>
 
@@ -44,7 +45,7 @@
             <button id="replayBtn" class="btn btn-primary">回放流程</button>
           </div>
 
-          <div class="button-row">
+          <div class="button-row button-row-triple">
             <button id="saveBtn" class="btn btn-ghost">导出流程</button>
             <button id="loadBtn" class="btn btn-ghost">导入流程</button>
             <button id="clearBtn" class="btn btn-ghost">清空</button>
@@ -62,27 +63,79 @@
           </div>
           <div class="status-line">
             <span>当前模式</span>
-            <strong id="analysisMode">本地理解</strong>
+            <strong id="analysisMode">等待配置</strong>
+          </div>
+          <div class="status-line">
+            <span>窗口行为</span>
+            <strong id="windowBehaviorText">前台显示</strong>
           </div>
         </section>
 
-        <section class="settings-panel">
+        <section class="route-summary-panel">
           <div class="section-title">
-            <span>AI 增强理解</span>
-            <small>可选</small>
+            <span>模型配置摘要</span>
+            <small id="settingsStatusText">未加载</small>
           </div>
+          <div class="summary-stack">
+            <div class="summary-card">
+              <span>简单任务</span>
+              <strong id="simpleRouteText">未配置</strong>
+            </div>
+            <div class="summary-card">
+              <span>复杂任务</span>
+              <strong id="complexRouteText">未配置</strong>
+            </div>
+            <div class="summary-card">
+              <span>录制隐藏</span>
+              <strong id="autoHideText">开启</strong>
+            </div>
+            <div class="summary-card">
+              <span>MCP 能力</span>
+              <strong id="mcpSummaryText">未启用</strong>
+            </div>
+            <div class="summary-card">
+              <span>Skills 能力</span>
+              <strong id="skillSummaryText">未启用</strong>
+            </div>
+          </div>
+          <button id="openSettingsBtn" class="btn btn-primary btn-full">打开设置中心</button>
+        </section>
+
+        <section class="agent-launch-panel">
+          <div class="section-title">
+            <span>通用 Agent</span>
+            <small>Mission</small>
+          </div>
+          <p class="field-hint">
+            输入一个任务目标，系统会结合录制流程、AI 理解结果和你配置的模型路由，生成一个可执行的 agent team。
+          </p>
+
           <label class="field">
-            <span>API Key</span>
-            <input id="apiKeyInput" type="password" placeholder="sk-..." />
+            <span>任务目标</span>
+            <textarea
+              id="missionInput"
+              rows="5"
+              placeholder="例如：整理 B 站搜索视频、筛选结果，并沉淀成可复用的自动化 agent"
+            ></textarea>
           </label>
+
           <label class="field">
-            <span>模型名</span>
-            <input id="modelInput" type="text" value="gpt-4.1-mini" />
+            <span>团队模板</span>
+            <select id="teamPresetSelect"></select>
           </label>
-          <label class="field">
-            <span>接口地址</span>
-            <input id="endpointInput" type="text" value="https://api.openai.com/v1/chat/completions" />
-          </label>
+
+          <div class="field field-checkbox">
+            <span>上下文来源</span>
+            <label class="toggle-line">
+              <input id="includeRecordingContextInput" type="checkbox" checked />
+              <span>把当前录制动作和 AI 理解结果一起作为团队上下文</span>
+            </label>
+          </div>
+
+          <div class="button-row">
+            <button id="planAgentBtn" class="btn btn-primary">生成 Agent Team</button>
+            <button id="resetMissionBtn" class="btn btn-ghost">重置任务</button>
+          </div>
         </section>
       </aside>
 
@@ -105,6 +158,81 @@
           </div>
           <webview id="agentWebview" partition="persist:action-agent" allowpopups></webview>
         </section>
+
+        <section class="agent-workbench">
+          <div class="workbench-panel mission-panel">
+            <div class="section-title">
+              <span>通用 Agent 工作台</span>
+              <small id="missionSyncText">等待生成</small>
+            </div>
+
+            <div id="missionEmpty" class="empty-state">
+              输入一个任务目标，或者先录制并理解一段流程，再点击“生成 Agent Team”。
+            </div>
+
+            <div id="missionContent" class="mission-content hidden">
+              <div class="mission-hero">
+                <p class="eyebrow">Mission Brief</p>
+                <h3 id="missionTitle"></h3>
+                <p id="missionSummary"></p>
+              </div>
+
+              <div class="mission-meta-grid">
+                <div class="summary-card">
+                  <span>目标</span>
+                  <strong id="missionObjectiveText"></strong>
+                </div>
+                <div class="summary-card">
+                  <span>团队模板</span>
+                  <strong id="missionPresetText"></strong>
+                </div>
+                <div class="summary-card">
+                  <span>模型路由</span>
+                  <strong id="missionRouteText"></strong>
+                </div>
+                <div class="summary-card">
+                  <span>任务难度</span>
+                  <strong id="missionDifficultyText"></strong>
+                </div>
+              </div>
+
+              <p id="teamNarrativeText" class="field-hint"></p>
+
+              <div class="mission-columns">
+                <div>
+                  <h4>阶段推进</h4>
+                  <div id="stageList" class="stage-list"></div>
+                </div>
+
+                <div>
+                  <h4>交接链路</h4>
+                  <div id="handoffList" class="handoff-list"></div>
+                </div>
+              </div>
+
+              <div class="mission-columns">
+                <div>
+                  <h4>检查点</h4>
+                  <ul id="checkpointList" class="meta-list"></ul>
+                </div>
+
+                <div>
+                  <h4>Agent 备注</h4>
+                  <ul id="teamNotesList" class="meta-list"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="workbench-panel team-panel">
+            <div class="section-title">
+              <span>Agent Team 可视化</span>
+              <small id="teamGraphCaption">选择团队模板</small>
+            </div>
+            <p id="teamGraphBlurb" class="field-hint"></p>
+            <div id="teamGraph" class="team-graph"></div>
+          </div>
+        </section>
       </main>
 
       <aside class="sidebar sidebar-right">
@@ -114,7 +242,7 @@
             <small id="confidenceText">等待分析</small>
           </div>
           <div id="analysisEmpty" class="empty-state">
-            先开始录制一段操作，再点击“理解动作”。
+            先录制一段操作，再点击“理解动作”，右侧会显示流程目标、风险和可回放步骤。
           </div>
           <div id="analysisContent" class="analysis-content hidden">
             <h3 id="analysisTitle"></h3>
@@ -123,6 +251,17 @@
               <span>目标</span>
               <strong id="analysisGoal"></strong>
             </p>
+            <div class="routing-card">
+              <div class="status-line">
+                <span>难度判定</span>
+                <strong id="difficultyText">等待判定</strong>
+              </div>
+              <div class="status-line">
+                <span>模型路由</span>
+                <strong id="selectedModelText">未选择</strong>
+              </div>
+              <p id="routingReasonText" class="routing-reason"></p>
+            </div>
             <div>
               <h4>步骤拆解</h4>
               <ol id="stepsList" class="steps-list"></ol>
@@ -141,7 +280,7 @@
         <section class="timeline-panel">
           <div class="section-title">
             <span>动作时间线</span>
-            <small id="timelineHint">按录制顺序展示</small>
+            <small>按录制顺序展示</small>
           </div>
           <div id="timeline" class="timeline"></div>
         </section>
